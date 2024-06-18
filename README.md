@@ -31,6 +31,4 @@ python process_mango_data.py
 ## Output
 The script generates a CSV file named `collated_mango_data.csv` containing the processed data.
 
----
 
-This description provides a clear and concise overview of the project's purpose, features, usage, requirements, and output, making it easy for others to understand and use the project.
