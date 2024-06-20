@@ -3,19 +3,45 @@ import pandas as pd
 # Define the file path to your Excel file
 excel_file = r"D:\AI internship\Data Preparation.xlsx"
 
+# Mappings for site locations, mango locations, and elevation
+site_location_map = {
+    'ADLAON': 'AL',
+    'GUBA': 'GB',
+    'TABUELAN': 'TB',
+    'BOGO': 'BG',
+    'LUSARAN': 'LS'
+}
+
+mango_location_map = {
+    'INSIDE': 'IN',
+    'OUT': 'OT',
+    'TOP': 'TP'
+}
+
+elevation_map = {
+    'UPLAND': 'UP',
+    'LOWLAND': 'LW'
+}
+
 # Function to create UniqueID based on the convention
 def create_unique_id(row):
     # Extract required fields from the row
-    site_location = str(row['Site']).strip().upper()[:3]  # First 3 characters of Site
-    elevation = str(row['Elevation']).strip().upper()[:2]  # First 2 characters of Elevation
+    site_location = str(row['Site']).upper()
+    elevation = str(row['Elevation']).upper()
     dafi = int(round(float(row['DAFI'])))  # DAFI (rounded to the nearest integer
     tree_info = str(row['TreeInfo']).split()
     tree_num = tree_info[0].strip().upper().zfill(2)  # Tree number, padded with zero if necessary
-    mango_loc = tree_info[1].strip().upper()[:2]  # First 2 characters of Mango Location
+    mango_loc = tree_info[1].upper()
     mango_num = str(row['MangoNum']).strip().upper().zfill(2)  # Mango number, padded with zero if necessary
+
+        
+    # Transform site location, mango location, and elevation using the mappings
+    site_abbr = site_location_map.get(site_location[:7], 'Unknown')  # Adjusted to match the full name
+    mango_loc_abbr = mango_location_map.get(mango_loc[:7], 'Unknown')  # Adjusted for full name
+    elevation_abbr = elevation_map.get(elevation[:7], 'Unknown')  # Adjusted for full nam
     
     # Create the UniqueID
-    unique_id = f"{site_location}{elevation}{dafi}{tree_num}M{mango_num}{mango_loc}"
+    unique_id = f"{site_abbr}{elevation_abbr}{dafi}{tree_num}M{mango_num}{mango_loc_abbr}"
     return unique_id
 
 # Read all sheets from Excel file into a dictionary of DataFrames
