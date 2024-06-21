@@ -26,7 +26,7 @@ elevation_map = {
 # Function to create UniqueID based on the convention
 def create_unique_id(row):
     # Extract required fields from the row
-    site_location = str(row['Site']).upper()
+    site_location = str(row['Site']).upper().strip()
     elevation = str(row['Elevation']).upper()
     dafi = int(round(float(row['DAFI'])))  # DAFI (rounded to the nearest integer
     tree_info = str(row['TreeInfo']).split()
