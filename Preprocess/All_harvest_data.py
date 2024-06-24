@@ -1,72 +1,47 @@
 import pandas as pd
 
 # Define the file path to your Excel file
-excel_file = r"D:\AI internship\Data Preparation.xlsx"
+excel_file_path = r"D:\AI internship\Main\Mangga_Internship\Data Preparation.xlsx"
+output_csv_file = 'collated_mango_data.csv'
 
 # Mappings for site locations, mango locations, and elevation
 site_location_map = {
-    'ADLAON': 'AL',
-    'GUBA': 'GB',
-    'TABUELAN': 'TB',
-    'BOGO': 'BG',
-    'LUSARAN': 'LS'
+    'ADLAON': 'AL', 'GUBA': 'GB', 'TABUELAN': 'TB', 'BOGO': 'BG', 'LUSARAN': 'LS'
 }
-
 mango_location_map = {
-    'INSIDE': 'IN',
-    'OUT': 'OT',
-    'TOP': 'TP'
+    'INSIDE': 'IN', 'OUT': 'OT', 'TOP': 'TP'
 }
-
 elevation_map = {
-    'UPLAND': 'UP',
-    'LOWLAND': 'LW'
+    'UPLAND': 'UP', 'LOWLAND': 'LW'
 }
 
-# Function to create UniqueID based on the convention
 def create_unique_id(row):
-    # Extract required fields from the row
-    site_location = str(row['Site']).upper().strip()
-    elevation = str(row['Elevation']).upper()
-    dafi = int(round(float(row['DAFI'])))  # DAFI (rounded to the nearest integer
-    tree_info = str(row['TreeInfo']).split()
-    tree_num = tree_info[0].strip().upper().zfill(2)  # Tree number, padded with zero if necessary
+    site_location = row['Site'].upper().strip()
+    elevation = row['Elevation'].upper().strip()
+    dafi = int(round(row['DAFI']))
+    tree_info = row['TreeInfo'].split()
+    tree_num = tree_info[0].upper().zfill(2)
     mango_loc = tree_info[1].upper()
-    mango_num = str(row['MangoNum']).strip().upper().zfill(2)  # Mango number, padded with zero if necessary
+    mango_num = str(row['MangoNum']).upper().zfill(2)
+    flotation = row['Flotation'][0].upper() if pd.notnull(row['Flotation']) else ''
 
-        
-    # Transform site location, mango location, and elevation using the mappings
-    site_abbr = site_location_map.get(site_location[:7], 'Unknown')  # Adjusted to match the full name
-    mango_loc_abbr = mango_location_map.get(mango_loc[:7], 'Unknown')  # Adjusted for full name
-    elevation_abbr = elevation_map.get(elevation[:7], 'Unknown')  # Adjusted for full nam
-    
-    # Create the UniqueID
-    unique_id = f"{site_abbr}{elevation_abbr}{dafi}{tree_num}M{mango_num}{mango_loc_abbr}"
-    return unique_id
+    site_abbr = site_location_map.get(site_location, 'Unknown')
+    mango_loc_abbr = mango_location_map.get(mango_loc, 'Unknown')
+    elevation_abbr = elevation_map.get(elevation, 'Unknown')
 
-# Read all sheets from Excel file into a dictionary of DataFrames
-sheets = pd.read_excel(excel_file, sheet_name=None)
+    return f"{site_abbr}{elevation_abbr}{dafi}{tree_num}M{mango_num}{mango_loc_abbr}{flotation}"
 
-# Initialize an empty DataFrame to hold all data
-all_data = pd.DataFrame()
+try:
+    sheets = pd.read_excel(excel_file_path, sheet_name=None)
+    all_data = pd.DataFrame()
 
-# Iterate through each sheet
-for sheet_name, df in sheets.items():
-    # Rename columns to ensure consistency
-    df.columns = ['MangoNum', 'TreeInfo', 'Weight', 'Flotation', 'Size', 'Category', 'Site', 'DAFI', 'Elevation']
-    
-    # Create UniqueID column
-    df['UniqueID'] = df.apply(create_unique_id, axis=1)
-    
-    # Extract the first letter for Flotation, Size, and Category columns
-    for column in ['Flotation', 'Size', 'Category']:
-        df[column] = df[column].apply(lambda x: x[0] if pd.notnull(x) else x)
-    
-    # Append only the necessary columns and the UniqueID to the all_data DataFrame
-    all_data = pd.concat([all_data, df[['UniqueID', 'MangoNum', 'TreeInfo', 'Weight', 'Flotation', 'Size', 'Category']]], ignore_index=True)
+    for sheet_name, df in sheets.items():
+        df.columns = ['MangoNum', 'TreeInfo', 'Weight', 'Flotation', 'Size', 'Category', 'Site', 'DAFI', 'Elevation']
+        df['UniqueID'] = df.apply(create_unique_id, axis=1)
+        df[['Flotation', 'Size', 'Category']] = df[['Flotation', 'Size', 'Category']].applymap(lambda x: x[0] if pd.notnull(x) else x)
+        all_data = pd.concat([all_data, df[['UniqueID', 'MangoNum', 'TreeInfo', 'Weight', 'Flotation', 'Size', 'Category']]], ignore_index=True)
 
-# Save the collated data to a CSV file
-output_csv = 'collated_mango_data.csv'
-all_data.to_csv(output_csv, index=False)
-
-print(f"Collated data saved to '{output_csv}'")
+    all_data.to_csv(output_csv_file, index=False)
+    print(f"Collated data saved to '{output_csv_file}'")
+except Exception as e:
+    print(f"An error occurred: {e}")
