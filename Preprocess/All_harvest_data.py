@@ -23,7 +23,7 @@ def create_unique_id(row):
     tree_num = tree_info[0].upper().zfill(2)
     mango_loc = tree_info[1].upper()
     mango_num = str(row['MangoNum']).upper().zfill(2)
-    flotation = row['Flotation'][0].upper() if pd.notnull(row['Flotation']) else ''
+    flotation = row['Flotation'][0].upper() if pd.notnull(row['Flotation']) else 'X'
 
     site_abbr = site_location_map.get(site_location, 'Unknown')
     mango_loc_abbr = mango_location_map.get(mango_loc, 'Unknown')
