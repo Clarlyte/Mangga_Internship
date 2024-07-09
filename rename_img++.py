@@ -2,22 +2,18 @@ import os
 import pandas as pd
 
 # Define the file path to your Excel file
-excel_file_path = r"D:\AI Internship Repo\Mangga PNLS Classification.xlsx"
-base_directory = r"D:\AI Internship Repo\Test"
+excel_file_path = r"D:\AI internship\Without Local(E).xlsx"
+base_directory = r"D:\AI internship\BG Removed - Copy"
 
-# Load all sheets from the Excel file into a single DataFrame with an additional column for sheet names
-all_sheets = pd.read_excel(excel_file_path, sheet_name=None)
-data_frames = []
-for sheet_name, df in all_sheets.items():
-    df['SheetName'] = sheet_name
-    data_frames.append(df)
-combined_df = pd.concat(data_frames)
+# Load the Excel file
+df = pd.read_excel(excel_file_path)
 
 # Mapping full names to single-letter abbreviations
 rating_map = {
-    'Local': 'L',
-    'Export': 'E',
-    'Reject': 'R'
+    'Local': 'LO',
+    'Export': 'EX',
+    'Reject': 'RE',
+    'X': 'NA'
 }
 
 # Set to keep track of processed files to prevent re-processing
@@ -27,6 +23,13 @@ processed_files = set()
 def process_images(df, base_directory):
     for index, row in df.iterrows():
         mango_id = str(row['MangoID']).strip()
+        orientation = row['Orientation']
+        bottom_rating = rating_map.get(str(row['Bottom Rating']).strip(), 'Unknown')
+        side_rating = rating_map.get(str(row['Side Rating']).strip(), 'Unknown')
+        top_rating = rating_map.get(str(row['Top Rating']).strip(), 'Unknown')
+
+        # Define the orientation folder based on the Orientation number
+        orientation_folder = f"S{orientation}"
 
         # Traverse the directory to find matching files
         for root, dirs, files in os.walk(base_directory):
@@ -34,19 +37,19 @@ def process_images(df, base_directory):
                 if mango_id in file[:-4] and file not in processed_files:  # Check if file has not been processed
                     new_base_name = file[:-4]  # Base name without the extension
 
-                    if 'S1' in file and 'SS' in file:
-                        rating = rating_map.get(str(row['Side Rating']).strip(), 'Unknown')
-                    elif 'S1' in file and 'TT' in file:
-                        rating = rating_map.get(str(row['Top Rating']).strip(), 'Unknown')
-                    elif 'S1' in file and 'BB' in file:
-                        rating = rating_map.get(str(row['Bottom Rating']).strip(), 'Unknown')
-                    else:
-                        continue  # Skip if no valid orientation is found
+                    if orientation_folder in file:
+                        if 'SS' in file:
+                            new_name = f"{new_base_name}{side_rating}.{file.split('.')[-1]}"
+                        elif 'TT' in file:
+                            new_name = f"{new_base_name}{top_rating}.{file.split('.')[-1]}"
+                        elif 'BB' in file:
+                            new_name = f"{new_base_name}{bottom_rating}.{file.split('.')[-1]}"
+                        else:
+                            continue  # Skip if no valid orientation is found
 
-                    new_name = f"{new_base_name}{rating}.{file.split('.')[-1]}"
-                    os.rename(os.path.join(root, file), os.path.join(root, new_name))
-                    print(f"Renamed '{file}' to '{new_name}'")
-                    processed_files.add(new_name)  # Mark this new name as processed
+                        os.rename(os.path.join(root, file), os.path.join(root, new_name))
+                        print(f"Renamed '{file}' to '{new_name}'")
+                        processed_files.add(new_name)  # Mark this new name as processed
 
-# Process images for each sheet in the combined DataFrame
-process_images(combined_df, base_directory)
+# Process images for each row in the DataFrame
+process_images(df, base_directory)
